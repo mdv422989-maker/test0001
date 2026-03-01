@@ -4,7 +4,7 @@ import Navigation from "@/components/Navigation";
 
 export const metadata: Metadata = {
   title: "家計簿アプリ",
-  description: "二人で使える家計簿アプリ - 支出管理・レシート読み取り・分析",
+  description: "二人で使える家計簿アプリ - 支出管理・レシート読み取り・精算・分析",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
