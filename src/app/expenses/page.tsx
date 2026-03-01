@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Expense } from "@/types";
 import { getExpenses, searchExpenses, deleteExpense } from "@/lib/firestore";
 import { exportToExcel } from "@/lib/export";
@@ -10,6 +11,7 @@ import { CATEGORIES } from "@/types";
 import { USERS } from "@/lib/users";
 
 export default function ExpensesPage() {
+  const router = useRouter();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,6 +83,10 @@ export default function ExpensesPage() {
     } catch {
       alert("削除に失敗しました");
     }
+  };
+
+  const handleEdit = (expense: Expense) => {
+    router.push(`/expenses/edit?id=${expense.id}`);
   };
 
   const handleExport = () => {
@@ -218,6 +224,7 @@ export default function ExpensesPage() {
             <ExpenseCard
               key={expense.id}
               expense={expense}
+              onEdit={handleEdit}
               onDelete={handleDelete}
             />
           ))}

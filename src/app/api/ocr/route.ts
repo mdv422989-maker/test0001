@@ -14,7 +14,17 @@ interface VisionApiResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    const { image } = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "リクエストの形式が不正です" },
+        { status: 400 }
+      );
+    }
+
+    const { image } = body;
 
     if (!image) {
       return NextResponse.json(
@@ -26,7 +36,10 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "Google Cloud Vision APIキーが設定されていません" },
+        {
+          error:
+            "OCR機能を利用するにはGoogle Cloud Vision APIキーの設定が必要です。Vercelの環境変数にGOOGLE_CLOUD_VISION_API_KEYを設定してください。",
+        },
         { status: 500 }
       );
     }
@@ -49,20 +62,44 @@ export async function POST(request: NextRequest) {
     );
 
     if (!visionResponse.ok) {
-      throw new Error("Vision API request failed");
+      const errorData = await visionResponse.json().catch(() => null);
+      const errorMsg =
+        errorData?.error?.message || `Vision APIエラー (${visionResponse.status})`;
+      console.error("Vision API Error:", errorMsg);
+      return NextResponse.json(
+        { error: `レシート読み取りエラー: ${errorMsg}` },
+        { status: 500 }
+      );
     }
 
     const visionData: VisionApiResponse = await visionResponse.json();
 
     if (visionData.responses[0]?.error) {
-      throw new Error(visionData.responses[0].error.message);
+      return NextResponse.json(
+        { error: `Vision APIエラー: ${visionData.responses[0].error.message}` },
+        { status: 500 }
+      );
     }
 
     const fullText =
       visionData.responses[0]?.textAnnotations?.[0]?.description || "";
 
+    if (!fullText) {
+      return NextResponse.json(
+        { error: "レシートからテキストを検出できませんでした。画像が鮮明か確認してください。" },
+        { status: 400 }
+      );
+    }
+
     // Parse receipt text
     const parsed = parseReceiptText(fullText);
+
+    if (parsed.items.length === 0) {
+      return NextResponse.json(
+        { error: "レシートから商品情報を読み取れませんでした。手動で入力してください。" },
+        { status: 400 }
+      );
+    }
 
     return NextResponse.json(parsed);
   } catch (error) {

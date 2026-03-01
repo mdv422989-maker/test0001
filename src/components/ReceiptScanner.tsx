@@ -37,11 +37,16 @@ export default function ReceiptScanner({ onScanComplete }: ReceiptScannerProps) 
         body: JSON.stringify({ image: base64 }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("OCR処理に失敗しました");
+        throw new Error(data.error || "OCR処理に失敗しました");
       }
 
-      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
       onScanComplete(data);
     } catch (err) {
       setError(

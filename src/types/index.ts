@@ -16,10 +16,18 @@ export interface Expense {
   receiptImageUrl: string;
   createdAt: number;
   updatedAt: number;
+  editHistory?: EditHistoryEntry[];
+}
+
+export interface EditHistoryEntry {
+  editedAt: number;
+  changes: string;
+  previousData: Partial<Expense>;
 }
 
 export type ExpenseCategory =
   | "食費"
+  | "外食"
   | "日用品"
   | "交通費"
   | "光熱費"
@@ -34,6 +42,7 @@ export type ExpenseCategory =
 
 export const CATEGORIES: ExpenseCategory[] = [
   "食費",
+  "外食",
   "日用品",
   "交通費",
   "光熱費",
@@ -49,6 +58,7 @@ export const CATEGORIES: ExpenseCategory[] = [
 
 export const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
   食費: "#ef4444",
+  外食: "#f43f5e",
   日用品: "#f97316",
   交通費: "#eab308",
   光熱費: "#22c55e",

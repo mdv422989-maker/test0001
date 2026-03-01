@@ -4,14 +4,16 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   query,
   orderBy,
   where,
   Timestamp,
+  arrayUnion,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { Expense } from "@/types";
+import { Expense, EditHistoryEntry } from "@/types";
 
 const COLLECTION_NAME = "expenses";
 
@@ -27,15 +29,27 @@ export async function addExpense(
   return docRef.id;
 }
 
+export async function getExpenseById(id: string): Promise<Expense | null> {
+  const docRef = doc(db, COLLECTION_NAME, id);
+  const snapshot = await getDoc(docRef);
+  if (!snapshot.exists()) return null;
+  return { id: snapshot.id, ...snapshot.data() } as Expense;
+}
+
 export async function updateExpense(
   id: string,
-  expense: Partial<Omit<Expense, "id" | "createdAt">>
+  expense: Partial<Omit<Expense, "id" | "createdAt">>,
+  historyEntry?: EditHistoryEntry
 ): Promise<void> {
   const docRef = doc(db, COLLECTION_NAME, id);
-  await updateDoc(docRef, {
+  const updateData: Record<string, unknown> = {
     ...expense,
     updatedAt: Date.now(),
-  });
+  };
+  if (historyEntry) {
+    updateData.editHistory = arrayUnion(historyEntry);
+  }
+  await updateDoc(docRef, updateData);
 }
 
 export async function deleteExpense(id: string): Promise<void> {
